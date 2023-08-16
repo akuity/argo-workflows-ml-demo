@@ -1,0 +1,44 @@
+# kubectl create secret generic minio --from-literal=username=minioadmin --from-literal=password=minioadmin
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: artifact-repositories
+  annotations:
+    workflows.argoproj.io/default-artifact-repository: default
+data:
+  default: |
+    archiveLogs: false
+    s3:
+      bucket: workflow-artifacts
+      endpoint: minio.minio.svc:9000
+      insecure: true
+      accessKeySecret:
+        name: minio
+        key: username
+      secretKeySecret:
+        name: minio
+        key: password
+  face-detect: |
+    archiveLogs: false
+    s3:
+      bucket: face-detect
+      endpoint: minio.minio.svc:9000
+      insecure: true
+      accessKeySecret:
+        name: minio
+        key: username
+      secretKeySecret:
+        name: minio
+        key: password
+  known-faces: |
+    archiveLogs: false
+    s3:
+      bucket: known-faces
+      endpoint: minio.minio.svc:9000
+      insecure: true
+      accessKeySecret:
+        name: minio
+        key: username
+      secretKeySecret:
+        name: minio
+        key: password

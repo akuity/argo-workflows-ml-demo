@@ -1,0 +1,75 @@
+# Event binding to process a Minio PUT event to submitting the face-detect workflow template
+# Minio Event Destination should be configured similarly to:
+#   Event ID: argo-workflows-ml-demo
+#   Event destination: https://workflows.demo.akuity.io:443/api/v1/events/argo-workflows-ml-demo/
+#   Auth Token: <the service account token of minio.service-account-token>
+#
+# Webhook event looks like:
+# {
+#    "EventName":"s3:ObjectCreated:Put",
+#    "Key":"face-detect/images/obama1.jpg",
+#    "Records":[
+#       {
+#          "awsRegion":"",
+#          "eventName":"s3:ObjectCreated:Put",
+#          "eventSource":"minio:s3",
+#          "eventTime":"2023-08-16T01:02:45.098Z",
+#          "eventVersion":"2.0",
+#          "requestParameters":{
+#             "principalId":"minioadmin",
+#             "region":"",
+#             "sourceIPAddress":"99.105.210.29"
+#          },
+#          "responseElements":{
+#             "x-amz-id-2":"dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8",
+#             "x-amz-request-id":"177BB76D4CB12EA6",
+#             "x-minio-deployment-id":"dc782c31-3825-4d21-b3ad-ee01ca778879",
+#             "x-minio-origin-endpoint":"http://10.0.110.81:9000"
+#          },
+#          "s3":{
+#             "bucket":{
+#                "arn":"arn:aws:s3:::face-detect",
+#                "name":"face-detect",
+#                "ownerIdentity":{
+#                   "principalId":"minioadmin"
+#                }
+#             },
+#             "configurationId":"Config",
+#             "object":{
+#                "contentType":"image/jpeg",
+#                "eTag":"dc8f5c8b4f5fe0bd9afaf4b99c39cd02",
+#                "key":"images%2Fobama1.jpg",
+#                "sequencer":"177BB76D4E275D16",
+#                "size":79302,
+#                "userMetadata":{
+#                   "content-type":"image/jpeg"
+#                }
+#             },
+#             "s3SchemaVersion":"1.0"
+#          },
+#          "source":{
+#             "host":"99.105.210.29",
+#             "port":"",
+#             "userAgent":"MinIO (linux; amd64) minio-go/v7.0.61 MinIO Console/(dev)"
+#          },
+#          "userIdentity":{
+#             "principalId":"minioadmin"
+#          }
+#       }
+#    ]
+# }
+apiVersion: argoproj.io/v1alpha1
+kind: WorkflowEventBinding
+metadata:
+  name: face-detect
+spec:
+  event:
+    selector: "true"
+  submit:
+    arguments:
+      parameters:
+      - name: key
+        valueFrom:
+          event: payload.Records[0].s3.object.key
+    workflowTemplateRef:
+      name: face-detect

@@ -1,0 +1,50 @@
+# Auth token + RBAC that we give to the minio webhook
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: minio
+
+---  
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: minio
+rules:
+- apiGroups:
+  - argoproj.io
+  resources:
+  - workflows
+  verbs:
+  - create
+  - list
+  - update
+- apiGroups:
+  - argoproj.io
+  resources:
+  - workfloweventbindings
+  - workflowtemplates
+  verbs:
+  - get
+  - list
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: minio
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: minio
+subjects:
+- kind: ServiceAccount
+  name: minio
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  annotations:
+    kubernetes.io/service-account.name: minio
+  name: minio.service-account-token
+type: kubernetes.io/service-account-token
