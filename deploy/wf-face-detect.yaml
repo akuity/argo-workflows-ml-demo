@@ -43,7 +43,7 @@ spec:
 
         # To approve this workflow, set 
         # argo node set --node-field-selector displayName=approve -p approved="yes" face-detect-xxxxx
-        # argo resume detect-xxxxx
+        # argo resume face-detect-xxxxx
         - name: approve
           dependencies: [identify-face]
           inline:
@@ -152,12 +152,13 @@ spec:
         transformation:
           - expression: "filter(data, {# endsWith \".jpg\"})"
       outputs:
+        # Workaround necessary for artifactPaths to work
         artifacts:
           - name: file
             path: /file
 
-    # Accepts a face artifact, and an s3 bucket of known faces, then produces the identity (name)
-    # of the individual
+    # Accepts a face artifact + and an s3 bucket of known faces, then outputs the identity (name)
+    # of the individual identified from the face
     - name: identify-face
       inputs:
         artifacts:
