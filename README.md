@@ -5,11 +5,13 @@ This is an example machine learning workflow which will:
 2. Downloads the image, and crop the faces into multiple files
 3. For each cropped face, run a face recognition model to identify the name of the face based on a directory of known faces
 
+![Screenshot](docs/screenshot.png)
+
 ## Requirements
 * Argo Workflows v3.5
-* S3 bucket (see minio directory for deploying in-cluster minio)
+* S3 bucket (see minio directory for example in-cluster minio deployment)
 
-Workflow features showcased:
+## Workflow features showcased:
 * WorkflowEventBinding for submitting a workflow from a minio webhook
 * DAG template for defining dependant steps
 * Script template for inlined python code
