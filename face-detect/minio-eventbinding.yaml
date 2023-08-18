@@ -64,12 +64,12 @@ metadata:
   name: face-detect
 spec:
   event:
-    selector: "true"
+    selector: hasPrefix(payload.Key, "face-detect/to-be-identified")
   submit:
     arguments:
       parameters:
       - name: key
         valueFrom:
-          event: payload.Records[0].s3.object.key
+          event: trimPrefix(payload.Key, "face-detect/")
     workflowTemplateRef:
       name: face-detect

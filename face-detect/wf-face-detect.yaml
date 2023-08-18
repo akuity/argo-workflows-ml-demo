@@ -7,14 +7,14 @@ spec:
   arguments:
     parameters:
     - name: key # s3 key in the face-detect bucket
-      value: obama_and_biden.jpg
+      value: to-be-identified/obama_and_biden.jpg
 
   serviceAccountName: face-detect
 
   # Optional. Indicates the artifact repository (s3 bucket) to use for intermediate artifacts for
   # the workflow (defined in the artifact-repositories ConfigMap). Uses the annotated default if omitted
   # artifactRepositoryRef:
-  #   key: default
+  #   key: face-detect
 
   # artifactGC:
   #   strategy: OnWorkflowDeletion
@@ -41,22 +41,13 @@ spec:
               s3:
                 key: "{{item}}"
 
-        # To approve this workflow, set 
-        # argo node set --node-field-selector displayName=approve -p approved="yes" face-detect-xxxxx
-        # argo resume face-detect-xxxxx
-        - name: approve
+        - name: approval
           dependencies: [identify-face]
-          inline:
-            suspend: {}
-            outputs:
-              parameters:
-                - name: approved
-                  valueFrom:
-                    supplied: {}
+          template: approval
 
         - name: fail
-          dependencies: [approve]
-          when: "'{{tasks.approve.outputs.parameters.approved}}' != 'yes'"
+          dependencies: [approval]
+          when: "{{tasks.approval.outputs.parameters.approved}} != YES"
           inline:
             container:
               image: busybox:1.36
@@ -64,8 +55,8 @@ spec:
               args: ["exit 1"]
 
         - name: finalize
-          dependencies: [approve]
-          when: "'{{tasks.approve.outputs.parameters.approved}}' == 'yes'"
+          dependencies: [approval]
+          when: "{{tasks.approval.outputs.parameters.approved}} == YES"
           inline:
             container:
               image: busybox:1.36
@@ -80,16 +71,7 @@ spec:
         - name: images
           path: /tmp/input/{{workflow.parameters.key}}
           s3:
-            insecure: true
-            endpoint: minio.minio.svc:9000
-            bucket: face-detect
             key: "{{workflow.parameters.key}}"
-            accessKeySecret:
-              name: minio
-              key: username
-            secretKeySecret:
-              name: minio
-              key: password
       script:
         image: hdgigante/python-opencv:4.7.0-ubuntu
         command: [/usr/bin/python3]
@@ -108,7 +90,6 @@ spec:
           gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
 
           # read the haarcascade to detect the faces in an image
-          # face_cascade = cv2.CascadeClassifier('haarcascades\haarcascade_frontalface_default.xml')
           face_cascade = cv2.CascadeClassifier('/usr/local/share/opencv4/haarcascades/haarcascade_frontalface_default.xml')
 
           # detects faces in the input image
@@ -139,16 +120,8 @@ spec:
           artifactPaths:
             name: workflow-artifacts
             s3:
-              bucket: workflow-artifacts
-              endpoint: minio.minio.svc:9000
-              key: "{{workflow.name}}"
-              insecure: true
-              accessKeySecret:
-                name: minio
-                key: username
-              secretKeySecret:
-                name: minio
-                key: password
+              bucket: face-detect
+              key: "wf-artifacts/{{workflow.name}}/"
         transformation:
           - expression: "filter(data, {# endsWith \".jpg\"})"
       outputs:
@@ -167,16 +140,7 @@ spec:
         - name: known-faces
           path: /data/known-faces
           s3:
-            bucket: known-faces
-            endpoint: minio.minio.svc:9000
             key: known-faces
-            insecure: true
-            accessKeySecret:
-              name: minio
-              key: username
-            secretKeySecret:
-              name: minio
-              key: password
       container:
         image: iankoulski/face-recognition
         command: [sh, -c]
@@ -187,3 +151,20 @@ spec:
         - name: name
           valueFrom:
             path: /tmp/name
+
+    # Suspend template that
+    - name: approval
+      suspend: {}
+      inputs:
+        parameters:
+        - name: approved
+          default: 'NO'
+          enum:
+          - 'YES'
+          - 'NO'
+          description: Choose YES to continue workflow
+      outputs:
+        parameters:
+        - name: approved
+          valueFrom:
+            supplied: {}
