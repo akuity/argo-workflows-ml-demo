@@ -7,7 +7,7 @@
 # Webhook event looks like:
 # {
 #    "EventName":"s3:ObjectCreated:Put",
-#    "Key":"face-detect/images/obama1.jpg",
+#    "Key":"face-detect/to-be-identified/obama1.jpg",
 #    "Records":[
 #       {
 #          "awsRegion":"",
@@ -38,7 +38,7 @@
 #             "object":{
 #                "contentType":"image/jpeg",
 #                "eTag":"dc8f5c8b4f5fe0bd9afaf4b99c39cd02",
-#                "key":"images%2Fobama1.jpg",
+#                "key":"to-be-identified%2Fobama1.jpg",
 #                "sequencer":"177BB76D4E275D16",
 #                "size":79302,
 #                "userMetadata":{
